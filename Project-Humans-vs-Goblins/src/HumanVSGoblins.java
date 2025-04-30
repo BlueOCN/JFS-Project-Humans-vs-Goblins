@@ -8,36 +8,58 @@
 * */
 
 import java.util.*;
+import java.util.Random;
 
 public class HumanVSGoblins {
     public static void main(String[] args) {
 
         boolean MasterSwitch = true;
         char GameState = 'S'; // Start
+        char Turn = 'H'; // Human Starts
+        int worldMaxWidth = 100;
+        int worldMaxHeight = 9;
+        Land worldMap = new Land();;
 
-        String menu = "Menu";
-        String worldmap = "World Map";
-        String battlesim = "Battle Simulator";
-        String end = "End Menu";
+        Human user = new Human(new Coordinate(50,4),10, 5, 5);
 
         Scanner sc = new Scanner(System.in);
         String userInput;
 
-        // Define the map using a String
-        String map =
-                "###############\n" +
-                        "#             #\n" +
-                        "#  H          #\n" +
-                        "#  G   +      #\n" +
-                        "#             #\n" +
-                        "###############";
-
-
         do {
             switch (GameState) {
                 case 'S':
-                    System.out.println("Initializing Game");
-                    System.out.println("Game Instructions and Mechanics");
+
+                    // Generate Map
+                    worldMap = new Land(worldMaxWidth, worldMaxHeight);
+
+                    // Generate Goblins
+                    Goblin goblin1 = new Goblin(worldMap.genRandomPosition(),5,5,5);
+                    Goblin goblin2 = new Goblin(worldMap.genRandomPosition(),5,5,5);
+                    ArrayList<Goblin> goblins = new ArrayList<>();
+                    goblins.add(goblin1);
+                    goblins.add(goblin2);
+                    worldMap.setGoblinsCollection(goblins);
+
+                    // Generate Chests
+                    Chest chest1 = new Chest(worldMap.genRandomPosition(),"boost");
+                    Chest chest2 = new Chest(worldMap.genRandomPosition(),"boost");
+                    ArrayList<Chest> chests = new ArrayList<>();
+                    chests.add(chest1);
+                    chests.add(chest2);
+                    worldMap.setChestsCollection(chests);
+
+                    // Generate Player
+                    user = new Human(new Coordinate(50,4),10, 5, 5);
+                    ArrayList<Human> humans = new ArrayList<>();
+                    humans.add(user);
+                    worldMap.setHumansCollection(humans);
+
+                    // Update entities on the world map
+                    worldMap.updateEntities();
+
+                    // Game Instructions and Mechanics
+                    System.out.println("The \"Humans VS Goblins\" game is an engaging turn-based strategy game where players control characters represented as objects, including land, goblins, and humans.\n");
+                    System.out.println("The game features turn-based movement (n/s/e/w), and combat is initiated when a human and goblin collide, utilizing random math for combat outcomes.");
 
                     System.out.print("Ready to Play? [Y/N]: ");
                     userInput = sc.nextLine().strip();
@@ -49,18 +71,28 @@ public class HumanVSGoblins {
                     break;
 
                 case 'P':
-                    System.out.println("Playing Game");
                     // Render Map
-                    System.out.println("Map is rendered");
-                    System.out.print(map);
-                    // Identify whose turn is it
-                    char owner = 'h'; //TODO extend functionality
+                    displayMap(worldMap);
                     // If user turn
-                    if (owner == 'h') {
+                    if (Turn == 'H') {
                         System.out.print("Where do you want to go? (N/S/E/W): ");
                         char direction = sc.nextLine().strip().toUpperCase().charAt(0);
                         switch (direction) {
                             case 'N':
+                                // Check the cell
+                                Coordinate userPosition = user.getCoordinates();
+                                Coordinate nextPosition = new Coordinate(userPosition.getX(), userPosition.getY()-1);
+                                System.out.println(worldMap.pickEntity(nextPosition));
+                                // If there is collision
+                                // then collision is true
+                                // if there is a goblin
+                                // collisionIsGoblin = true
+                                // if there is a chest
+                                // collisionIsChest = true
+                                // If there is no collision
+                                // then move north:
+                                //      land.updatePosition(coor,human)
+                                //
                                 System.out.println("Move North by 1 unit");
                                 break;
                             case 'S':
@@ -90,6 +122,8 @@ public class HumanVSGoblins {
                             GameState = 'P';
                         }
 
+                        Turn = 'G';
+
                     } else {
                         System.out.print("Goblin moves 1 unit. Direction is random");
                         boolean collision = true;
@@ -100,6 +134,8 @@ public class HumanVSGoblins {
                         } else {
                             GameState = 'P';
                         }
+
+                        Turn = 'H';
                     }
                     break;
 
@@ -145,5 +181,12 @@ public class HumanVSGoblins {
             }
         } while (MasterSwitch);
 
+    }
+
+    public static void displayMap(Land map) {
+        String title = "Humans VS Goblins";
+        int margin = (map.getWidth()-title.length())/2;
+        System.out.printf("%-"+margin+"s %s\n", "", title);
+        map.display();
     }
 }
