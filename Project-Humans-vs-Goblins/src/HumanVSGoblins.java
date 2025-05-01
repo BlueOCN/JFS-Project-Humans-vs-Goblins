@@ -18,9 +18,12 @@ public class HumanVSGoblins {
         char Turn = 'H'; // Human Starts
         int worldMaxWidth = 100;
         int worldMaxHeight = 9;
-        Land worldMap = new Land();;
+        Land worldMap = new Land();
 
         Human user = new Human(new Coordinate(50,4),10, 5, 5);
+
+        Goblin goblinCollision = new Goblin();
+        Chest chestCollision = new Chest();
 
         Scanner sc = new Scanner(System.in);
         String userInput;
@@ -71,100 +74,221 @@ public class HumanVSGoblins {
                     break;
 
                 case 'P':
+
                     // Render Map
                     displayMap(worldMap);
                     // If user turn
                     if (Turn == 'H') {
+
+                        Coordinate nextPosition;
+                        Coordinate userPosition = user.getCoordinates();
+
                         System.out.print("Where do you want to go? (N/S/E/W): ");
                         char direction = sc.nextLine().strip().toUpperCase().charAt(0);
                         switch (direction) {
+
                             case 'N':
-                                // Check the cell
-                                Coordinate userPosition = user.getCoordinates();
-                                Coordinate nextPosition = new Coordinate(userPosition.getX(), userPosition.getY()-1);
-                                System.out.println(worldMap.pickEntity(nextPosition));
-                                // If there is collision
-                                // then collision is true
-                                // if there is a goblin
-                                // collisionIsGoblin = true
-                                // if there is a chest
-                                // collisionIsChest = true
-                                // If there is no collision
-                                // then move north:
-                                //      land.updatePosition(coor,human)
-                                //
-                                System.out.println("Move North by 1 unit");
+                                // Calculate the next move coordinate assuming you move north
+                                nextPosition = new Coordinate(userPosition.getX(), userPosition.getY()-1);
                                 break;
+
                             case 'S':
-                                System.out.println("Move South by 1 unit");
+                                // Calculate the next move coordinate assuming you move south
+                                nextPosition = new Coordinate(userPosition.getX(), userPosition.getY()+1);
                                 break;
+
                             case 'E':
-                                System.out.println("Move East by 1 unit");
+                                // Calculate the next move coordinate assuming you move east
+                                nextPosition = new Coordinate(userPosition.getX()-1, userPosition.getY());
                                 break;
+
                             case 'W':
-                                System.out.println("Move West by 1 unit");
+                                // Calculate the next move coordinate assuming you move east
+                                nextPosition = new Coordinate(userPosition.getX()+1, userPosition.getY());
                                 break;
+
                             default:
-                                System.out.println("Invalid direction");
+                                // TODO Add validation to direction
+                                throw new IllegalStateException("Unexpected value: " + direction);
                         }
 
-                        boolean collision = true;
-                        boolean isGoblin = true;
-                        boolean isChest = false;
 
-                        if (collision && isGoblin) {
-                            System.out.println("Goblin collision");
+                        // Check if the next moves collides with a goblin
+                        goblinCollision = worldMap.findGoblin(nextPosition);
+
+                        // Check if the next move collides with a chest
+                        chestCollision = worldMap.findChest(nextPosition);
+
+                        // If collision exists and is with goblin
+                        if (goblinCollision != null) {
+                            // Go to Battle State
                             GameState = 'B';
-                        } else if ( collision && isChest) {
-                            System.out.println("Chest collision");
+                        }
+                        // If collision exists and is with chest
+                        else if (chestCollision != null) {
+                            // Go to Chest State
                             GameState = 'C';
-                        } else {
+                        }
+                        // If there is no collision
+                        else {
+                            // Remain in Play State
                             GameState = 'P';
                         }
 
-                        Turn = 'G';
+                        // Update player position on the map
+                        worldMap.updateCoordinates(nextPosition, user);
+                        worldMap.updateEntities();
 
-                    } else {
-                        System.out.print("Goblin moves 1 unit. Direction is random");
-                        boolean collision = true;
-                        boolean isHuman = false;
-                        if (collision && isHuman) {
-                            System.out.println("Human collision");
-                            GameState = 'B';
-                        } else {
-                            GameState = 'P';
-                        }
+                        // Give up the turn to Goblin
+//                        Turn = 'G';
 
-                        Turn = 'H';
                     }
+                    // if Goblin turn
+//                    else {
+//                        System.out.print("Goblin moves 1 unit. Direction is random");
+//                        collision = false;
+//                        boolean isHuman = false;
+//                        if (collision && isHuman) {
+//                            System.out.println("Human collision");
+//                            GameState = 'B';
+//                        } else {
+//                            GameState = 'P';
+//                        }
+
+//                        Turn = 'H';
+//                    }
                     break;
 
                 case 'B':
-                    System.out.println("Battle Simulator");
+
+                    boolean won;
+
+                    System.out.println("\n\033[1mBattle Simulator\033[0m");
                     // Batle loop: to exit battle player must win
                     // TODO Implement Battle Loop
-                    boolean won = true;
+                    System.out.println("Standing before you is a goblin—a creature of cunning and malice. Its wiry frame is hunched over, emphasizing its unnatural agility. \nIts skin is a sickly green, mottled with patches of darker tones, almost blending with the murk of the forest. \nBeady yellow eyes glint with a mixture of mischief and danger, constantly darting about as if calculating its next move.");
+                    System.out.printf(
+                            "\n%-23s %-23s %-20s %23s %23s\n\n" +
+                            "%-20s %-20d %-16s %20s %20s\n" +
+                            "%-20s %-20d %-16s %20s %20s\n" +
+                            "%-20s %-20d %-16s %20s %20s\n\n",
+                            "\033[1mYour Stats\033[0m", "", "", "", "\033[1mGoblin Stats\033[0m", // Header
+                            "Health", user.getHealth(), "" , goblinCollision.getHealth(), "Health", // Health row
+                            "Strength", user.getStrength(), "", goblinCollision.getStrength(), "Strength", // Strength row
+                            "Endurance", user.getEndurance(), "", goblinCollision.getEndurance(), "Endurance" // Endurance row
+                    );
+                    System.out.print("Ready to meet your luck? [Y/N]: ");
+                    userInput = sc.nextLine().strip(); // TODO increment stats if lucky
+
+                    // TODO Better formulae
+                    int randomNumber = (int) (Math.random() * 2);
+                    if (randomNumber == 0) {
+                        won = false;
+                    } else {
+                        won = true;
+                    }
+
                     // if player win
                     if (won) {
                         System.out.println("Battle Simulator won");
-                        System.out.println("Updating Map");
-                        System.out.println("Generating random treasure chests on the map");
+                        // Remove Goblin of the map
+                        worldMap.removeEntity(goblinCollision);
+                        // Add more treasures to the map
+                        Chest newChest = new Chest(worldMap.genRandomPosition(),"boost");
+                        worldMap.addChest(newChest);
+                        // Update Entities
+                        worldMap.updateEntities();
                         GameState = 'P';
                     } else {
                         System.out.println("Battle Simulator lost");
+                        // Remove Player from the map
+                        worldMap.removeEntity(user);
+                        // Update Entities
+                        worldMap.updateEntities();
+                        // Render map
+                        displayMap(worldMap);
                         GameState = 'E';
                     }
                     break;
 
                 case 'C':
-                    System.out.println("Chest Gatcha"); //TODO implement Gatcha
-                    // Generate random boost or item
-                    // Show user old vs new stats
+                    System.out.println("\n\033[1mYou have found some Treasure...\033[0m");
+                    System.out.println("\nThe treasure chest stands before you, an enigma waiting to be unraveled. \nIts weathered wooden planks bear the scars of time—scratches, gouges, and the faint marks\nof old battles. Bands of tarnished iron wrap around its edges, their once-polished surfaces \nnow dulled by age and rust. The lock at the center glints faintly in the dim light, \nan intricate mechanism that speaks of both craftsmanship and secrecy.");
+                    System.out.print("\n" +
+                            "*******************************************************************************\n" +
+                            "          |                   |                  |                     |\n" +
+                            " _________|________________.=\"\"_;=.______________|_____________________|_______\n" +
+                            "|                   |  ,-\"_,=\"\"     `\"=.|                  |\n" +
+                            "|___________________|__\"=._o`\"-._        `\"=.______________|___________________\n" +
+                            "          |                `\"=._o`\"=._      _`\"=._                     |\n" +
+                            " _________|_____________________:=._o \"=._.\"_.-=\"'\"=.__________________|_______\n" +
+                            "|                   |    __.--\" , ; `\"=._o.\" ,-\"\"\"-._ \".   |\n" +
+                            "|___________________|_._\"  ,. .` ` `` ,  `\"-._\"-._   \". '__|___________________\n" +
+                            "          |           |o`\"=._` , \"` `; .\". ,  \"-._\"-._; ;              |\n" +
+                            " _________|___________| ;`-.o`\"=._; .\" ` '`.\"\\` . \"-._ /_______________|_______\n" +
+                            "|                   | |o;    `\"-.o`\"=._``  '` \" ,__.--o;   |\n" +
+                            "|___________________|_| ;     (#) `-.o `\"=.`_.--\"_o.-; ;___|___________________\n" +
+                            "____/______/______/___|o;._    \"      `\".o|o_.--\"    ;o;____/______/______/____\n" +
+                            "/______/______/______/_\"=._o--._        ; | ;        ; ;/______/______/______/_\n" +
+                            "____/______/______/______/__\"=._o--._   ;o|o;     _._;o;____/______/______/____\n" +
+                            "/______/______/______/______/____\"=._o._; | ;_.--\"o.--\"_/______/______/______/_\n" +
+                            "____/______/______/______/______/_____\"=.o|o_.--\"\"___/______/______/______/____\n" +
+                            "/______/______/______/______/______/______/______/______/______/______/[TomekK]\n" +
+                            "*******************************************************************************\n"
+                            );
+                    System.out.print("Ready to meet your luck? [Y/N]: ");
+                    userInput = sc.nextLine().strip();
+
+                    // Generate random boost
+                    Random random = new Random();
+                    int randInt = random.nextInt(1,4);
+                    switch (randInt) {
+
+                        case 1:
+                            // +1 Health
+                            System.out.println("\n\033[1mYou feel better now. +1 Health.\033[0m\n");
+                            user.setHealth(user.getHealth() + 1);
+                            break;
+
+                        case 2:
+                            // +1 Strength
+                            System.out.println("\n\033[1mYou feel stronger now. +1 Strength.\033[0m\n");
+                            user.setStrength(user.getStrength() + 1);
+                            break;
+
+                        case 3:
+                            // +1 Endurance
+                            System.out.println("\n\033[1mYou feel ready now. +1 Endurance.\033[0m\n");
+                            user.setEndurance(user.getEndurance() + 1);
+                            break;
+                    }
+
+                    // Remove Chest from the map
+                    worldMap.removeEntity(chestCollision);
+                    // Update Entities
+                    worldMap.updateEntities();
+
                     GameState = 'P';
                     break;
 
                 case 'E':
-                    System.out.println("End Menu");
+
+                    System.out.println("⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⡀⠀\n" +
+                            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣤⣤⠀⠀⠀⢀⣴⣿⡶⠀⣾⣿⣿⡿⠟⠛⠁\n" +
+                            "⠀⠀⠀⠀⠀⠀⣀⣀⣄⣀⠀⠀⠀⠀⣶⣶⣦⠀⠀⠀⠀⣼⣿⣿⡇⠀⣠⣿⣿⣿⠇⣸⣿⣿⣧⣤⠀⠀⠀\n" +
+                            "⠀⠀⢀⣴⣾⣿⡿⠿⠿⠿⠇⠀⠀⣸⣿⣿⣿⡆⠀⠀⢰⣿⣿⣿⣷⣼⣿⣿⣿⡿⢀⣿⣿⡿⠟⠛⠁⠀⠀\n" +
+                            "⠀⣴⣿⡿⠋⠁⠀⠀⠀⠀⠀⠀⢠⣿⣿⣹⣿⣿⣿⣿⣿⣿⡏⢻⣿⣿⢿⣿⣿⠃⣼⣿⣯⣤⣴⣶⣿⡤⠀\n" +
+                            "⣼⣿⠏⠀⣀⣠⣤⣶⣾⣷⠄⣰⣿⣿⡿⠿⠻⣿⣯⣸⣿⡿⠀⠀⠀⠁⣾⣿⡏⢠⣿⣿⠿⠛⠋⠉⠀⠀⠀\n" +
+                            "⣿⣿⠲⢿⣿⣿⣿⣿⡿⠋⢰⣿⣿⠋⠀⠀⠀⢻⣿⣿⣿⠇⠀⠀⠀⠀⠙⠛⠀⠀⠉⠁⠀⠀⠀⠀⠀⠀⠀\n" +
+                            "⠹⢿⣷⣶⣿⣿⠿⠋⠀⠀⠈⠙⠃⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀\n" +
+                            "⠀⠀⠈⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣤⣤⣴⣶⣦⣤⡀⠀\n" +
+                            "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⡀⠀⠀⠀⠀⠀⠀⠀⣠⡇⢰⣶⣶⣾⡿⠷⣿⣿⣿⡟⠛⣉⣿⣿⣿⠆\n" +
+                            "⠀⠀⠀⠀⠀⠀⢀⣤⣶⣿⣿⡎⣿⣿⣦⠀⠀⠀⢀⣤⣾⠟⢀⣿⣿⡟⣁⠀⠀⣸⣿⣿⣤⣾⣿⡿⠛⠁⠀\n" +
+                            "⠀⠀⠀⠀⣠⣾⣿⡿⠛⠉⢿⣦⠘⣿⣿⡆⠀⢠⣾⣿⠋⠀⣼⣿⣿⣿⠿⠷⢠⣿⣿⣿⠿⢻⣿⣧⠀⠀⠀\n" +
+                            "⠀⠀⠀⣴⣿⣿⠋⠀⠀⠀⢸⣿⣇⢹⣿⣷⣰⣿⣿⠃⠀⢠⣿⣿⢃⣀⣤⣤⣾⣿⡟⠀⠀⠀⢻⣿⣆⠀⠀\n" +
+                            "⠀⠀⠀⣿⣿⡇⠀⠀⢀⣴⣿⣿⡟⠀⣿⣿⣿⣿⠃⠀⠀⣾⣿⣿⡿⠿⠛⢛⣿⡟⠀⠀⠀⠀⠀⠻⠿⠀⠀\n" +
+                            "⠀⠀⠀⠹⣿⣿⣶⣾⣿⣿⣿⠟⠁⠀⠸⢿⣿⠇⠀⠀⠀⠛⠛⠁⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀\n" +
+                            "⠀⠀⠀⠀⠈⠙⠛⠛⠛⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀");
                     System.out.print("Do you want to Exit? [Y/N]: ");
                     userInput = sc.nextLine().strip();
                     if (userInput.equalsIgnoreCase("Y") || userInput.equalsIgnoreCase("YES")) {

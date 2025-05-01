@@ -1,3 +1,4 @@
+import java.util.Objects;
 import java.util.UUID;
 
 public class Human {
@@ -66,6 +67,17 @@ public class Human {
 
     public void setEndurance(int endurance) {
         this.endurance = endurance;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof Human human)) return false;
+        return health == human.health && strength == human.strength && endurance == human.endurance && Objects.equals(Id, human.Id) && Objects.equals(Coordinates, human.Coordinates);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(Id, Coordinates, health, strength, endurance);
     }
 
     @Override

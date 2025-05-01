@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Random;
 
 public class Land {
@@ -74,8 +75,25 @@ public class Land {
         this.chestsCollection = chestsCollection;
     }
 
-    public char pickEntity(Coordinate coordinate) {
-        return map[coordinate.getY()][coordinate.getX()];
+    public Goblin findGoblin(Coordinate coordinate) {
+        for (Goblin goblin : this.goblinsCollection) {
+            if (goblin.getCoordinates().equals(coordinate)) {
+                return goblin;
+            }
+        }
+        return null;
+    }
+    public void addChest(Chest chest) {
+        this.chestsCollection.add(chest);
+    }
+
+    public Chest findChest(Coordinate coordinate) {
+        for (Chest chest : this.chestsCollection) {
+            if (chest.getCoordinates().equals(coordinate)) {
+                return chest;
+            }
+        }
+        return null;
     }
 
     //Update all collections
@@ -92,9 +110,9 @@ public class Land {
             throw new IndexOutOfBoundsException("Error: " + goblin + " cannot be assigned to the map`s border");
         }
 
-        if (map[coordinates.getY()][coordinates.getX()] != ' ') {
-            throw new IndexOutOfBoundsException("Error: " + goblin + " collision detected.");
-        }
+//        if (map[coordinates.getY()][coordinates.getX()] != ' ') {
+//            throw new IndexOutOfBoundsException("Error: " + goblin + " collision detected.");
+//        }
 
             map[coordinates.getY()][coordinates.getX()] = goblin.toString().charAt(0);
         }
@@ -110,9 +128,9 @@ public class Land {
                 throw new IndexOutOfBoundsException("Error: " + chest + " cannot be assigned to the map`s border");
             }
 
-            if (map[coordinates.getY()][coordinates.getX()] != ' ') {
-                throw new IndexOutOfBoundsException("Error: " + chest + " collision detected.");
-            }
+//            if (map[coordinates.getY()][coordinates.getX()] != ' ') {
+//                throw new IndexOutOfBoundsException("Error: " + chest + " collision detected.");
+//            }
 
             map[coordinates.getY()][coordinates.getX()] = chest.toString().charAt(0);
         }
@@ -128,11 +146,20 @@ public class Land {
                 throw new IndexOutOfBoundsException("Error: " + human + " cannot be assigned to the map`s border");
             }
 
-            if (map[coordinates.getY()][coordinates.getX()] != ' ') {
-                throw new IndexOutOfBoundsException("Error: " + human + " collision detected.");
-            }
+//            if (map[coordinates.getY()][coordinates.getX()] != ' ') {
+//                throw new IndexOutOfBoundsException("Error: " + human + " collision detected.");
+//            }
 
             map[coordinates.getY()][coordinates.getX()] = human.toString().charAt(0);
+        }
+    }
+
+    public void updateCoordinates(Coordinate coordinates, Human human) {
+        map[human.getCoordinates().getY()][human.getCoordinates().getX()] = ' ';
+        for (Human h : this.humansCollection) {
+            if (h.getId().equals(human.getId())) {
+                h.setCoordinates(coordinates);
+            }
         }
     }
 
@@ -219,6 +246,18 @@ public class Land {
 //
 //        map[y][x] = symbol;
 //    }
+
+    public void removeEntity(Goblin goblin) {
+        this.goblinsCollection.remove(goblin);
+    }
+
+    public void removeEntity(Chest chest) {
+        this.chestsCollection.remove(chest);
+    }
+
+    public void removeEntity(Human human) {
+        this.humansCollection.remove(human);
+    }
 
     public Coordinate genRandomPosition(){
         int x = new Random().nextInt(1, width - 2);
